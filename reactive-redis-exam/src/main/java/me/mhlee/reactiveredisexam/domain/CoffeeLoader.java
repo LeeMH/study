@@ -22,13 +22,20 @@ public class CoffeeLoader {
     @PostConstruct
     public void loadData() {
 
-        factory.getReactiveConnection().serverCommands().flushAll().thenMany(
+        factory.getReactiveConnection().serverCommands()
+                .flushAll()
+                .log()
+                .thenMany(
                         Flux.just("Jet Black Redis", "Darth Redis", "Black Alert Redis")
                                 .log()
                                 .map(name -> new Coffee(UUID.randomUUID().toString(), name))
-                                .flatMap(coffee -> coffeeOps.opsForValue().set(coffee.getId(), coffee)))
-                .thenMany(coffeeOps.keys("*")
-                        .flatMap(coffeeOps.opsForValue()::get))
+                                .flatMap(coffee -> coffeeOps.opsForValue().set(coffee.getId(), coffee))
+                )
+                .thenMany(
+                        coffeeOps.keys("*")
+                                .log()
+                                .flatMap(coffeeOps.opsForValue()::get)
+                )
                 .subscribe(System.out::println);
     }
 }
